@@ -1,0 +1,64 @@
+{
+  "name": "try-or-die",
+  "version": "0.1.0",
+  "description": "Try? Or die?",
+  "license": "MIT",
+  "author": "Bert De Block",
+  "type": "module",
+  "main": "index.js",
+  "bin": {
+    "try-or-die": "bin/try-or-die.js"
+  },
+  "files": [
+    "bin/",
+    "dist/"
+  ],
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "lint": "concurrently --group --prefix-colors auto \"npm:lint:*(!fix)\"",
+    "lint:fix": "concurrently --group --prefix-colors auto \"npm:lint:*:fix\"",
+    "lint:format": "prettier . --cache --check",
+    "lint:format:fix": "prettier . --cache --write",
+    "lint:js": "eslint . --cache",
+    "lint:js:fix": "eslint . --fix",
+    "lint:types": "tsc --noEmit",
+    "prepack": "tsc --project tsconfig.json",
+    "prepare": "pnpm build",
+    "start": "pnpm build --watch",
+    "test": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "debug": "^4.3.4",
+    "execa": "^8.0.1",
+    "find-up": "^6.3.0",
+    "flatten-anything": "^3.0.5",
+    "fs-extra": "^11.1.1",
+    "lodash.set": "^4.3.2",
+    "temp-dir": "^3.0.0",
+    "yargs": "^17.7.2"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.22.17",
+    "@babel/eslint-parser": "^7.22.15",
+    "@types/debug": "^4.1.8",
+    "@types/fs-extra": "^11.0.1",
+    "@types/lodash.set": "^4.3.7",
+    "@types/node": "^20.6.0",
+    "@types/yargs": "^17.0.24",
+    "@vitest/coverage-v8": "^0.34.4",
+    "concurrently": "^8.2.1",
+    "eslint": "^8.49.0",
+    "eslint-plugin-n": "^16.0.2",
+    "fixturify-project": "^6.0.0",
+    "prettier": "^3.0.3",
+    "type-fest": "^4.3.1",
+    "typescript": "^5.2.2",
+    "vitest": "^0.34.4"
+  },
+  "packageManager": "pnpm@8.7.4",
+  "volta": {
+    "node": "18.17.1"
+  }
+}

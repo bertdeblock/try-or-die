@@ -1,0 +1,66 @@
+name: CI
+
+concurrency:
+  cancel-in-progress: true
+  group: ci-${{github.head_ref || github.ref}}
+
+on:
+  pull_request:
+    branches: main
+  push:
+    branches: main
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: wyvox/action-setup-pnpm@v2
+      - run: pnpm lint
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: wyvox/action-setup-pnpm@v2
+      - run: pnpm test
+
+  scenario:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: wyvox/action-setup-pnpm@v2
+      - run: pnpm build
+      - run: pnpm install
+        working-directory: test-app
+      - run: node ../bin/try-or-die.js scenario ${{matrix.scenario}}
+        working-directory: test-app
+    strategy:
+      matrix:
+        scenario:
+          - ember-lts-4.8
+          - ember-lts-4.12
+          - ember-release
+          - ember-beta
+          - ember-canary
+          - embroider-safe
+          - embroider-optimized
+
+  scenarios:
+    needs: test
+    runs-on: ${{matrix.os}}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: wyvox/action-setup-pnpm@v2
+      - run: pnpm build
+      - run: pnpm install
+        working-directory: test-app
+      - run: node ../bin/try-or-die.js scenarios
+        working-directory: test-app
+    strategy:
+      matrix:
+        os:
+          - macos-latest
+          - ubuntu-latest
+          - windows-latest
