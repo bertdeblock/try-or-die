@@ -40,9 +40,10 @@ export async function readConfig(cwd: string, _configPath?: string) {
     );
 
     configFactory = _configFactory;
-  } catch {
+  } catch (cause) {
     throw new PrettyError(
       `Could not find or import config file \`${configPath}\`.`,
+      { cause },
     );
   }
 

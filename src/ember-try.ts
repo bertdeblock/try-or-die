@@ -10,7 +10,7 @@ export function isEmberTryScenario(scenario: any) {
 /**
  * Transform an `ember-try` scenario to a `try-or-die` scenario.
  */
-export function transformEmberTryScenario(scenario: any): Scenario {
+export function transformEmberTryScenario(scenario: any): Partial<Scenario> {
   return {
     env: scenario.env,
     name: scenario.name,

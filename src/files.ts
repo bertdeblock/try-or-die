@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import {
   copy,
@@ -8,6 +9,32 @@ import {
   writeJson,
 } from "fs-extra/esm";
 import tempDir from "temp-dir";
+import { PackageJson } from "type-fest";
+import { Scenario } from "./types.js";
+
+/**
+ * Apply a scenario's files.
+ */
+export function applyScenarioFiles(
+  cwd: string,
+  files: Scenario["files"],
+): Promise<void[]> {
+  return Promise.all(
+    Object.keys(files).map(async (file) => {
+      const path = join(cwd, file);
+      const newContent = files[file];
+
+      if (typeof newContent === "string") {
+        await writeFile(path, newContent);
+      } else if (typeof newContent === "function") {
+        await writeFile(
+          path,
+          await newContent(await readFile(path, { encoding: "utf-8" })),
+        );
+      }
+    }),
+  );
+}
 
 /**
  * Back up multiple files.
@@ -46,7 +73,7 @@ export function readPackageFile(cwd: string) {
 /**
  * Write a `package.json` file.
  */
-export function writePackageFile(cwd: string, packageJson: object) {
+export function writePackageFile(cwd: string, packageJson: PackageJson) {
   return writeJson(join(cwd, "package.json"), packageJson, { spaces: 2 });
 }
 
