@@ -2,17 +2,24 @@ import { execa } from "execa";
 import { flattenObject } from "flatten-anything";
 import set from "lodash.set";
 import { stderr, stdout } from "node:process";
+import { PackageJson } from "type-fest";
 import { debugFactory } from "./debug-factory.js";
 import { isEmberTryScenario, transformEmberTryScenario } from "./ember-try.js";
 import { applyScenarioEnv } from "./env.js";
 import { PrettyError } from "./errors.js";
-import { backUpFiles, readPackageFile, writePackageFile } from "./files.js";
+import {
+  applyScenarioFiles,
+  backUpFiles,
+  readPackageFile,
+  writePackageFile,
+} from "./files.js";
 import { PACKAGE_MANAGER_LOCKFILE } from "./package-managers.js";
 import { type Command, type Config, type Scenario } from "./types.js";
 import { printBanner, printInfo, printSuccess } from "./ui.js";
 
-const DEFAULT_SCENARIO = {
+const DEFAULT_SCENARIO: Scenario = {
   env: {},
+  files: {},
   name: "default",
   packageJson: {},
 };
@@ -28,7 +35,7 @@ export async function runScenario(
   config: Config,
   { restore = true } = {},
 ) {
-  const scenario = { ...DEFAULT_SCENARIO };
+  const scenario: Scenario = { ...DEFAULT_SCENARIO };
   const scenarioStartTime = Date.now();
 
   if (isEmberTryScenario(providedScenario)) {
@@ -43,18 +50,24 @@ export async function runScenario(
   printBanner(`START ${scenario.name}`);
 
   const lockfile = PACKAGE_MANAGER_LOCKFILE[config.packageManager];
-  const packageJson = await readPackageFile(cwd);
+  // const packageJson = await readPackageFile(cwd);
 
   const restoreProcessEnv = applyScenarioEnv(scenario.env);
-  const restoreFiles = await backUpFiles(cwd, ["package.json", lockfile]);
+  const restoreFiles = await backUpFiles(cwd, [
+    // "package.json",
+    lockfile,
+    ...Object.keys(scenario.files),
+  ]);
+
   const restoreState = async () => {
     restoreProcessEnv();
     await restoreFiles();
   };
 
-  applyScenarioPackageJson(packageJson, scenario.packageJson);
+  // applyScenarioPackageJson(packageJson, scenario.packageJson);
 
-  await writePackageFile(cwd, packageJson);
+  await applyScenarioFiles(cwd, scenario.files);
+  // await writePackageFile(cwd, packageJson);
   await runCommand({
     command: [
       config.packageManager,
@@ -94,8 +107,8 @@ export async function runScenario(
 }
 
 function applyScenarioPackageJson(
-  packageJson: object,
-  packageJsonScenario: object,
+  packageJson: PackageJson,
+  packageJsonScenario: PackageJson,
 ) {
   const packageJsonScenarioFlat = flattenObject(packageJsonScenario);
 

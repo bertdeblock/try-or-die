@@ -15,8 +15,11 @@ export interface PrintOptions {
   prefix?: string;
 }
 
+export type FileHandler = (content: string) => string | Promise<string>;
+
 export interface Scenario {
   env: Record<string, any>;
+  files: { [filePath: string]: string | FileHandler };
   name: string;
   npm?: Record<string, any>;
   packageJson: PackageJson;
