@@ -4,7 +4,6 @@ import set from "lodash.set";
 import { stderr, stdout } from "node:process";
 import { debugFactory } from "./debug-factory.js";
 import { isEmberTryScenario, transformEmberTryScenario } from "./ember-try.js";
-import { applyScenarioEnv } from "./env.js";
 import { PrettyError } from "./errors.js";
 import { backUpFiles, readPackageFile, writePackageFile } from "./files.js";
 import { PACKAGE_MANAGER_LOCKFILE } from "./package-managers.js";
@@ -45,10 +44,8 @@ export async function runScenario(
   const lockfile = PACKAGE_MANAGER_LOCKFILE[config.packageManager];
   const packageJson = await readPackageFile(cwd);
 
-  const restoreProcessEnv = applyScenarioEnv(scenario.env);
   const restoreFiles = await backUpFiles(cwd, ["package.json", lockfile]);
   const restoreState = async () => {
-    restoreProcessEnv();
     await restoreFiles();
   };
 
@@ -62,6 +59,7 @@ export async function runScenario(
       ...config.packageManagerInstallOptions,
     ],
     cwd,
+    env: scenario.env,
     onFailure: restore ? restoreState : undefined,
     scenario,
     stage: "SETUP",
@@ -70,6 +68,7 @@ export async function runScenario(
   await runCommand({
     command: config.testCommand,
     cwd,
+    env: scenario.env,
     onFailure: restore ? restoreState : undefined,
     scenario,
     stage: "TEST",
@@ -80,6 +79,7 @@ export async function runScenario(
     await runCommand({
       command: [config.packageManager, "install"],
       cwd,
+      env: scenario.env,
       scenario,
       stage: "RESTORE",
     });
@@ -109,12 +109,14 @@ function applyScenarioPackageJson(
 async function runCommand({
   command,
   cwd,
+  env,
   onFailure,
   scenario,
   stage,
 }: {
   command: Command;
   cwd: string;
+  env: NodeJS.ProcessEnv;
   onFailure?: () => void;
   scenario: Scenario;
   stage: string;
@@ -128,9 +130,12 @@ async function runCommand({
 
   try {
     const [commandFile, ...commandArgs] = command;
-    await execa(commandFile, commandArgs, { cwd })
-      .pipeStderr?.(stderr)
-      .pipeStdout?.(stdout);
+    await execa(commandFile, commandArgs, {
+      cwd,
+      env,
+      stderr: ["pipe", stderr],
+      stdout: ["pipe", stdout],
+    });
   } catch (cause: any) {
     await onFailure?.();
     throw new PrettyError(`Failed to run \`${commandString}\`.`, {
