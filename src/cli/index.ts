@@ -28,7 +28,7 @@ yargs(hideBin(process.argv))
     },
     handler(options) {
       withPrettyErrors(() =>
-        runScenario(cwd(), options.name, {
+        runScenario(cwd(), options.name as string, {
           configPath: options.configPath,
           restore: options.restore,
         }),
@@ -54,7 +54,7 @@ yargs(hideBin(process.argv))
       withPrettyErrors(() =>
         runScenarios(cwd(), {
           configPath: options.configPath,
-          names: options.names,
+          names: options.names as string[],
         }),
       );
     },
